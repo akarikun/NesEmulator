@@ -7,6 +7,8 @@
 
 6502指令集参考：  http://www.6502.org/tutorials/6502opcodes.html
 
+有些指令会有多种机器码，参考ByteCode.cs中的定义（数据来源于ChatGPT）
+
 | 6502指令 | 机器码 | 伪代码 (C#) | 说明 |
 |---------|--------|-------------|------|
 | ADC #nn | 69 nn | A += nn + C; | 加上立即数和进位位 |
@@ -91,50 +93,7 @@ $0605    a9 05     LDA #$05
 $0607    8d 01 02  STA $0201
 $060a    a9 08     LDA #$08
 $060c    8d 02 02  STA $0202
-
-//伪代码大概是这样的
-A=0x01
-Addr[0x0200]=A
-A=0x05
-Addr[0x0201]=A
-A=0x08
-Addr[0x0202]=A
 ```
 
-```
-public static Register register = new Register();
-
-//对应的方法实现
-public void Execute(byte[] code)
-{
-    var addr = new byte[0xffff];
-    //for (var i = 0; i < code.Length; i++)
-    //{
-    //    addr[0x0600 + i] = code[i];
-    //}
-    register.PC = 0x0600;//程序是从0x0600开始运行，每次执行后要处理PC寄存器及FLAG位
-    byte index = 0;
-    while (index < code.Length)
-    {
-        switch (code[index])
-        {
-            case 0xa9://a9 01     LDA #$01    A = code[1]
-                {
-                    register.A = code[1];
-                    index += 2;
-                    register.PC += index;
-                }
-                break;
-            case 0x8d://8d 00 02  STA $0200    addr[0x0200]=A
-                {
-                    var offset = (code[index + 2] << 8) + code[index + 1];
-                    addr[offset] = register.A;
-                    index += 3;
-                    register.PC += index;
-                }
-                break;
-        }
-        //这里处理FLAG位
-    }
-}
-```
+目前完成绘图
+ ![pic1](pic1.jpg) 

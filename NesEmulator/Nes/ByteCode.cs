@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -79,48 +80,80 @@ namespace NesEmulator.Nes
         public byte[] STX { get { return new byte[] { 0x86, 0x96, 0x8E }; } }
         public byte[] STY { get { return new byte[] { 0x84, 0x94, 0x8C }; } }
         #endregion
-        public byte[] this[string name]
-        {
-            get
-            {
-                name = name.ToUpper();
-                return this.GetType().GetProperties().Where(x => x.Name == name).FirstOrDefault().GetValue(this) as byte[];
-            }
-        }
-        public ByteCodeLengthAttribute this[byte val]
-        {
-            get
-            {
-                var ps = this.GetType().GetProperties();
-                foreach (var p in ps)
-                {
-                    if ((p.GetValue(this) as byte[]).Contains(val))
-                    {
-                        return p.GetCustomAttribute<ByteCodeLengthAttribute>();
-                    }
-                }
-                return default;
-            }
-        }
+        //public byte[] this[string name]
+        //{
+        //    get
+        //    {
+        //        name = name.ToUpper();
+        //        return this.GetType().GetProperties().Where(x => x.Name == name).FirstOrDefault().GetValue(this) as byte[];
+        //    }
+        //}
+        //public ByteCodeLengthAttribute this[byte val]
+        //{
+        //    get
+        //    {
+        //        var ps = this.GetType().GetProperties();
+        //        foreach (var p in ps)
+        //        {
+        //            if ((p.GetValue(this) as byte[]).Contains(val))
+        //            {
+        //                return p.GetCustomAttribute<ByteCodeLengthAttribute>();
+        //            }
+        //        }
+        //        return default;
+        //    }
+        //}
 
-        public bool IsValid(byte code)
+        //public bool IsValid(byte code)
+        //{
+        //    return this.GetType().GetProperties().Any(x => ((byte[])x.GetValue(this)).Contains(code));
+        //}
+        //public bool IsValid(string name, byte code)
+        //{
+        //    name = name.ToUpper();
+        //    return this.GetType().GetProperties().Where(x => x.Name == name).Any(x => ((byte[])x.GetValue(this)).Contains(code));
+        //}
+        public Register register = new Register();
+        public byte[] addr = new byte[0xffff];
+        /// <summary>
+        /// 初始化内存数据
+        /// </summary>
+        public void InitAddr(byte[] code)
         {
-            return this.GetType().GetProperties().Any(x => ((byte[])x.GetValue(this)).Contains(code));
-        }
-        public bool IsValid(string name, byte code)
-        {
-            name = name.ToUpper();
-            return this.GetType().GetProperties().Where(x => x.Name == name).Any(x => ((byte[])x.GetValue(this)).Contains(code));
-        }
-        public static Register register = new Register();
-        public void Execute(byte[] code)
-        {
-            var addr = new byte[0xffff];
-            //for (var i = 0; i < code.Length; i++)
-            //{
-            //    addr[0x0600 + i] = code[i];
-            //}
+            /*
+说明:
+    内存$fe在每条指令中包含一个随机类型。
+    内存$ff则包含最后的按键ascii编码。
+    内存$200到$5ff映射到屏幕的像素,其中的值带班不同的颜色:
+
+$0: Black(黑)
+$1: White(白)
+$2: Red(红)
+$3: Cyan(蓝绿)
+$4: Purple(紫)
+$5: Green(绿)
+$6: Blue(蓝)
+$7: Yellow(黄)
+$8: Orange(橙)
+$9: Brown(棕色)
+$a: Light red(淡红)
+$b: Dark grey(深灰)
+$c: Grey(灰色)
+$d: Light green(淡绿)
+$e: Light blue(淡蓝)
+$f: Light grey(淡灰)
+             */
+            addr[0xfe] = (byte)new Random().Next(0, 0x100);
+            addr[0xff] = 0x30;
             register.PC = 0x0600;//程序是从0x0600开始运行，每次执行后要处理PC寄存器及FLAG位
+            for (var i = 0; i < code.Length; i++)
+            {
+                addr[0x0600 + i] = code[i];
+            }
+        }
+        public void Execute(byte[] code, Action<byte[], byte, object> action = null)
+        {
+            InitAddr(code);
             byte index = 0;
             while (index < code.Length)
             {
@@ -128,17 +161,23 @@ namespace NesEmulator.Nes
                 {
                     case 0xa9://a9 01     LDA #$01    A = code[1]
                         {
-                            register.A = code[1];
-                            index += 2;
-                            register.PC += index;
+                            register.A = code[index + 1];
+
+                            action?.Invoke(addr, code[index], null);
+                            byte step = 2;
+                            index += step;
+                            register.PC += step;
                         }
                         break;
                     case 0x8d://8d 00 02  STA $0200    addr[0x0200]=A
                         {
                             var offset = (code[index + 2] << 8) + code[index + 1];
                             addr[offset] = register.A;
-                            index += 3;
-                            register.PC += index;
+
+                            action?.Invoke(addr, code[index], offset);
+                            byte step = 3;
+                            index += step;
+                            register.PC += step;
                         }
                         break;
                 }
