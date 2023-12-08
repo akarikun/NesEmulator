@@ -1,11 +1,11 @@
 # NesEmulator
  Nes模拟器
 
-参考文章： https://codediy.github.io/nes-zh/easy6502/index.html
+### 参考文章： https://codediy.github.io/nes-zh/easy6502/index.html
 
-6502寄存器参考：  https://happysoul.github.io/nes/6502/page/BASIC/register.htm
+### 6502寄存器参考：  https://happysoul.github.io/nes/6502/page/BASIC/register.htm
 
-6502指令集参考：  http://www.6502.org/tutorials/6502opcodes.html
+### 6502指令集参考：  http://www.6502.org/tutorials/6502opcodes.html
 
 有些指令会有多种机器码，参考ByteCode.cs中的定义（数据来源于ChatGPT）
 
