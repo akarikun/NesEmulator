@@ -97,7 +97,7 @@ namespace NesEmulator
                 var wh = 10;
                 var col = (i - 0x200) / 32;
                 var row = (i - 0x200) % 32;
-                g.FillRectangle(new SolidBrush(colorFn(code.addr[i])), new RectangleF(row * wh, col * wh, wh, wh));
+                g.FillRectangle(new SolidBrush(colorFn(code.memory[i])), new RectangleF(row * wh, col * wh, wh, wh));
             }
         }
 
@@ -117,7 +117,7 @@ namespace NesEmulator
             var sb = new StringBuilder();
             for (var i = 0; i < length; i++)
             {
-                sb.Append(code.addr[index + i].ToString("X2") + " ");
+                sb.Append(code.memory[index + i].ToString("X2") + " ");
             }
             Console.WriteLine("Address-log");
             Console.WriteLine(sb);
@@ -155,7 +155,7 @@ namespace NesEmulator
             richTextBox2.AppendText(@"
 Stopped
 
-Program end at PC=$" + code.register.PC.ToString("X4"));
+Program end at PC=$" + code.PC.ToString("X4"));
         }
         private void Test2()
         {
@@ -185,7 +185,7 @@ $060d    00        BRK
                 }
                 else if(cd == 0xe0)
                 {
-                    Console.WriteLine(code.register.P);
+                    Console.WriteLine(code.P);
                 }
             });
 
@@ -193,7 +193,7 @@ $060d    00        BRK
             richTextBox2.AppendText(@"
 Stopped
 
-Program end at PC=$" + code.register.PC.ToString("X4") + @"
+Program end at PC=$" + code.PC.ToString("X4") + @"
 ");
             AddressLog(0x200, 10);
         }
